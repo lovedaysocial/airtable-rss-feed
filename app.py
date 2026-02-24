@@ -52,29 +52,40 @@ def rss_all():
     if not AIRTABLE_TOKEN:
         return Response("Error: Airtable token not set", status=500)
 
+    debug_info = []  # Collect debug messages
     all_records = []
+
     for section, config in SOURCES.items():
-        records = fetch_records(config['table'], config['view'])
-        for r in records:
-            r['section'] = section  # Tag for title
-        all_records.extend(records)
+        table_id_or_name = config['table']
+        view_name = config['view']
+        debug_info.append(f"Fetching section '{section}' from table/ID '{table_id_or_name}' (view: {view_name})")
+
+        try:
+            records = fetch_records(table_id_or_name, view_name)
+            debug_info.append(f"Fetched {len(records)} records from '{table_id_or_name}'")
+            for r in records:
+                r['section'] = section
+            all_records.extend(records)
+        except Exception as e:
+            debug_info.append(f"Error fetching '{table_id_or_name}': {str(e)}")
+
+    debug_text = "\n".join(debug_info) if debug_info else "No debug info"
 
     rss = ET.Element('rss', {'version': '2.0'})
     channel = ET.SubElement(rss, 'channel')
-    ET.SubElement(channel, 'title').text = 'Idea Engine - All Content RSS Feed'
-    ET.SubElement(channel, 'link').text = 'https://your-vercel-url.vercel.app/rss-all.xml'  # Change after deploy
-    ET.SubElement(channel, 'description').text = 'Live combined feed from Airtable Idea Engine'
+    ET.SubElement(channel, 'title').text = 'Idea Engine - All Content RSS Feed (Debug Mode)'
+    ET.SubElement(channel, 'link').text = 'https://airtable-rss-feed.vercel.app/rss-all.xml'
+    ET.SubElement(channel, 'description').text = f"Debug info:\n{debug_text}\n\nLive combined feed from Airtable Idea Engine"
 
     for record in all_records:
         fields = record['fields']
         item = ET.SubElement(channel, 'item')
         section = record.get('section', 'Unknown')
-        title_field = fields.get('A Idea', 'Untitled')  # Your primary field name
+        title_field = fields.get('A Idea', 'Untitled')
         ET.SubElement(item, 'title').text = f"[{section}] {title_field}"
         desc = (
             f"Why it works: {fields.get('Why it works', 'N/A')}\n"
-            f"Created: {fields.get('Created', 'N/A')}\n"
-            # Add more fields here if you want, e.g. fields.get('Another Field', '')
+            f"Created: {fields.get('Created', 'N/A')}"
         )
         ET.SubElement(item, 'description').text = desc
         ET.SubElement(item, 'pubDate').text = fields.get('Created', datetime.utcnow().isoformat() + 'Z')
