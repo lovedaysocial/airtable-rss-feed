@@ -16,7 +16,7 @@ BASE_ID = 'appW2SWPgF4UpXNlX'
 # List of sections/tables – update these names exactly as they appear in your Airtable tabs
 # For now, start with just 'Inspiration'. Add more after testing.
 SOURCES = {
-    'Inspiration': {'table': 'tbl7X4PErUG8qyhDz', 'view': None},
+   'Inspiration': {'table': 'tbl7X4PErUG8qyhDz', 'view': 'Grid view'},
     # Uncomment and edit these lines once the first one works:
     # 'Tutorials': {'table': 'Tutorials', 'view': None},
     # 'Templates': {'table': 'Templates', 'view': None},
